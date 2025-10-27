@@ -1,1 +1,169 @@
+# Sorting Algorithm Performance Analyzer (Python)
+
+A lightweight, extensible toolkit to measure and compare the runtime performance and operation counts of common sorting algorithms in Python. Useful for education, benchmarking, and exploring how different input distributions and sizes affect algorithm behavior.
+
+Features
+- Implementations (reference/instrumented) of multiple sorting algorithms:
+  - Bubble Sort, Selection Sort, Insertion Sort
+  - Merge Sort, Quick Sort, Heap Sort
+  - Python's built-in Timsort (via list.sort())
+- Instrumentation for:
+  - Time measurements (high-resolution)
+  - Operation counts (comparisons, swaps/moves) when enabled
+- Batch experiments across many input sizes and distributions (random, sorted, reverse, nearly-sorted)
+- Outputs:
+  - CSV/JSON summary of results
+  - Matplotlib plots (time vs. n, normalized comparisons vs. n log n, etc.)
+- Extensible: add a new algorithm in a couple of lines and register it
+
+Requirements
+- Python 3.8+
+- Recommended packages:
+  - numpy
+  - matplotlib
+  
+
+Install
+1. Clone your repository (replace with your repo URL):
+   ```
+   git clone https://github.com/<your-username>/<repo>.git
+   cd <repo>
+   ```
+
+2. Create and activate a virtual environment (optional but recommended):
+   ```
+   python -m venv .venv
+   source .venv/bin/activate   # macOS / Linux
+   .venv\Scripts\activate      # Windows (PowerShell)
+   ```
+
+3. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+   If you don't have a requirements.txt, install the main packages directly:
+   ```
+   pip install numpy matplotlib pandas
+   ```
+
+Quickstart — CLI
+Run a basic benchmark from the command line (example; adjust to your CLI script name like `analyzer.py` or `main.py`):
+```
+python analyzer.py --algorithms quicksort mergesort timsort \
+                   --sizes 100 1000 5000 10000 \
+                   --trials 5 --distribution random \
+                   --output results.csv --plot results.png
+```
+
+Common options
+- --algorithms: comma-separated list of algorithms to run (names must match those registered)
+- --sizes: list of input sizes to test
+- --trials: number of runs per size to average
+- --distribution: random | sorted | reversed | nearly-sorted
+- --seed: RNG seed for reproducibility
+- --output: path to CSV or JSON summary
+- --plot: path to save plot image(s)
+- --instrument: enable counting comparisons/swaps (may slow down algorithms)
+
+Example: generate results and view plots
+```
+python analyzer.py --algorithms bubblesort quicksort mergesort timsort \
+                   --sizes 100 500 1000 5000 \
+                   --trials 10 --distribution random \
+                   --output bench.csv --plot bench.png --instrument
+```
+
+Programmatic API
+You can also use the analyzer as a library in your own scripts:
+
+```python
+from analyzer import run_benchmarks, Algorithm
+
+algorithms = [
+    Algorithm(name="quicksort", sort_fn=quicksort),
+    Algorithm(name="mergesort", sort_fn=mergesort),
+    Algorithm(name="timsort", sort_fn=lambda a: a.sort())
+]
+
+results = run_benchmarks(algorithms=algorithms,
+                         sizes=[100, 1000, 10000],
+                         trials=3,
+                         distribution="random",
+                         seed=42,
+                         instrument=True)
+
+# results is a pandas.DataFrame (or list/dict depending on implementation)
+results.to_csv("benchmarks.csv", index=False)
+```
+
+How performance is measured
+- Time: measured with time.perf_counter() for high-resolution timing. For each trial we:
+  - Generate an input array
+  - Copy it for each algorithm to ensure identical input
+  - Run the algorithm and measure elapsed time
+  - Optionally collect comparison/swap counters if the implementation updates counters
+- Trials: multiple trials per size, report mean, median, min, max, and standard deviation
+- Aggregation: outputs per-algorithm per-size aggregated statistics, plus raw-trial data if requested
+
+Input distributions
+- random: uniformly random integers
+- sorted: ascending order
+- reversed: descending order
+- nearly-sorted: mostly sorted with a small percentage shuffled
+
+Adding a new algorithm
+1. Implement a sorting function with signature sort_fn(arr, *, instrument=None) or the repository's expected signature. If you want to support operation counting, accept and update an instrument object with counters, or use a decorator/helper that wraps comparisons/swaps.
+2. Register your algorithm in the algorithms list (e.g., algorithms.py) with a unique name and reference to the function.
+3. Add tests for correctness and (optionally) small benchmarking tests.
+
+Example (registering):
+```python
+# algorithms.py
+def my_sort(arr, instrument=None):
+    # modify arr in-place or return a new sorted list depending on conventions
+    ...
+
+ALGORITHMS = {
+    "mysort": my_sort,
+    ...
+}
+```
+
+Outputs
+- CSV/JSON summary with columns like:
+  - algorithm, size, trial, time_seconds, comparisons, swaps, distribution, timestamp
+- Plots generated by Matplotlib:
+  - time vs n (log/log or linear)
+  - comparisons vs n log n (to compare with theoretical bounds)
+  - boxplots of trial times for each algorithm/size
+
+Testing
+- Run unit tests:
+  ```
+  pytest
+  ```
+- Tests should cover:
+  - Correctness on randomized and pathological inputs
+  - Stability (if applicable)
+  - Instrumentation counters consistency
+
+Examples and educational uses
+- Visualize how quicksort degrades on already-sorted input if using a poor pivot
+- Compare asymptotic trends of O(n^2) vs O(n log n) algorithms
+- Teach students why algorithm choice matters for very small vs very large n
+
+Contributing
+- Fork the repo and open a pull request
+- Add tests for new algorithms or behavior
+- Keep code style consistent (flake8/pylint suggestions)
+- Update README with any new features you add
+
+License
+- MIT License — see LICENSE file for details
+
+Acknowledgements
+- Built for learning and reproducible benchmarking. Inspired by common CS courses and algorithm textbooks.
+
+Contact
+- If this repository belongs to you on GitHub, add your contact or GitHub handle here.
 # Sorting-Algorithm-Performance-Analyzer
